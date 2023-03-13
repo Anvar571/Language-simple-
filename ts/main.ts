@@ -9,11 +9,12 @@ function repl() {
   // Continue Repl Until User Stops Or Types `exit`
   while (true) {
     const input = prompt("> ");
-    console.clear();
     // Check for no user input or exit keyword.
     if (!input || input.includes("exit")) {
       Deno.exit(1);
     }
+    
+    console.clear();
 
     // Produce AST From sourc-code
     const program = parser.produceAST(input);
