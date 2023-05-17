@@ -1,6 +1,7 @@
 
 export enum TokenType {
     // Literal Types
+    Null,
     Number,
     Identifier,
   
@@ -20,6 +21,7 @@ export enum TokenType {
    */
   const KEYWORDS: Record<string, TokenType> = {
     let: TokenType.Let,
+    null: TokenType.Null
   };
   
   // Reoresents a single token from the source-code.
@@ -98,7 +100,7 @@ export enum TokenType {
           const reserved = KEYWORDS[ident];
           // If value is not undefined then the identifier is
           // reconized keyword
-          if (reserved) {
+          if (typeof reserved == "number") {
             tokens.push(token(ident, reserved));
           } else {
             // Unreconized name must mean user defined symbol.

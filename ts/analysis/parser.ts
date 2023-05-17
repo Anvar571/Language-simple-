@@ -3,6 +3,7 @@ import {
   BinaryExpr,
   Expr,
   Identifier,
+  NullLiteral,
   NumericLiteral,
   Program,
   Stmt,
@@ -42,6 +43,7 @@ export default class Parser {
    * Returns the previous token and then advances the tokens array to the next value.
    *  Also checks the type of expected token and throws if the values dnot match.
    */
+
   private expect(type: TokenType, err: any) {
     const prev = this.tokens.shift() as Token;
     if (!prev || prev.type != type) {
@@ -125,7 +127,10 @@ export default class Parser {
       // User defined values.
       case TokenType.Identifier:
         return { kind: "Identifier", symbol: this.eat().value } as Identifier;
-
+      
+      case TokenType.Null:
+        this.eat();
+        return {kind: "NullLiteral", value: "null"} as NullLiteral
       // Constants and Numeric Constants
       case TokenType.Number:
         return {

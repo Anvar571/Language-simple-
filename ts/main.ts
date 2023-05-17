@@ -1,4 +1,5 @@
 import Parser from "./analysis/parser.ts";
+import { evaluate } from "./runtime/interpreter.ts";
 
 repl();
 
@@ -10,14 +11,16 @@ function repl() {
   while (true) {
     const input = prompt("> ");
     // Check for no user input or exit keyword.
+
     if (!input || input.includes("exit")) {
       Deno.exit(1);
     }
     
-    console.clear();
-
     // Produce AST From sourc-code
     const program = parser.produceAST(input);
-    console.log(program);
+    const result = evaluate(program);
+    console.log(result);
   }
+
 }
+
