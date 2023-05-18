@@ -10,6 +10,7 @@ function repl() {
   // Continue Repl Until User Stops Or Types `exit`
   while (true) {
     const input = prompt("> ");
+    input?.toString()
     // Check for no user input or exit keyword.
 
     if (!input || input.includes("exit")) {
@@ -21,8 +22,8 @@ function repl() {
     
     console.log(program);
     
-    const result = evaluate(program);
-    console.log(result);
+    // const result = evaluate(program);
+    // console.log(result);
   }
 }
 

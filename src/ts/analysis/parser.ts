@@ -38,7 +38,7 @@ export default class Parser {
     const prev = this.tokens.shift() as Token;
     return prev;
   }
-
+  
   /**
    * Returns the previous token and then advances the tokens array to the next value.
    *  Also checks the type of expected token and throws if the values dnot match.
