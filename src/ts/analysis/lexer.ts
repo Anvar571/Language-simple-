@@ -1,18 +1,18 @@
 
 export enum TokenType {
   // Literal Types
-  Null,
   Number,
   Identifier,
 
   // Keywords
   Let,
-
+  Const,
   // Grouping * Operators
   BinaryOperator,
   Equals,
   OpenParen,
   CloseParen,
+  Samicolon,
   EOF, // Signified the end of file
 }
 
@@ -21,7 +21,7 @@ export enum TokenType {
  */
 const KEYWORDS: Record<string, TokenType> = {
   let: TokenType.Let,
-  null: TokenType.Null
+  const: TokenType.Const
 };
 
 // Reoresents a single token from the source-code.
@@ -78,7 +78,9 @@ export function tokenize(sourceCode: string): Token[] {
     } // Handle Conditional & Assignment Tokens
     else if (src[0] == "=") {
       tokens.push(token(src.shift(), TokenType.Equals));
-    } // HANDLE MULTICHARACTER KEYWORDS, TOKENS, IDENTIFIERS ETC...
+    } else if (src[0] == ";") {
+      tokens.push(token(src.shift(), TokenType.Samicolon));
+    }// HANDLE MULTICHARACTER KEYWORDS, TOKENS, IDENTIFIERS ETC...
     else {
       // Handle numeric literals -> Integers
       if (isint(src[0])) {

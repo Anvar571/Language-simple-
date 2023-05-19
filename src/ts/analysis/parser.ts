@@ -3,10 +3,10 @@ import {
   BinaryExpr,
   Expr,
   Identifier,
-  NullLiteral,
   NumericLiteral,
   Program,
   Stmt,
+  VarDeclaration,
 } from "./ats.ts";
 
 import { Token, tokenize, TokenType } from "./lexer.ts";
@@ -34,11 +34,11 @@ export default class Parser {
   /**
    * Returns the previous token and then advances the tokens array to the next value.
    */
-  private eat() {
+  private  eat() {
     const prev = this.tokens.shift() as Token;
     return prev;
   }
-  
+
   /**
    * Returns the previous token and then advances the tokens array to the next value.
    *  Also checks the type of expected token and throws if the values dnot match.
@@ -72,7 +72,44 @@ export default class Parser {
   // Handle complex statement types
   private parse_stmt(): Stmt {
     // skip to parse_expr
-    return this.parse_expr();
+    switch (this.at().type) {
+      case TokenType.Let:
+      case TokenType.Const:
+        return this.parse_var_declaration();
+      default:
+        return this.parse_expr();
+
+    }
+
+  }
+
+  private parse_var_declaration(): Stmt {
+    const isConstand = this.eat().type == TokenType.Const;
+    const identifier = this.expect(TokenType.Identifier, "Expected identifier name following let | const keywords").value
+  
+    if (this.at().type == TokenType.Samicolon){
+      this.eat()
+      if (isConstand){
+        throw "Must assign value to constant expression no value provided.";
+      }
+      return {
+        kind: "VarDeclaration",
+        identifier,
+        constant: false
+      } as VarDeclaration;
+    }
+
+    this.expect(TokenType.Equals, "Expacted equals token following identifier in var declaration.");
+  
+    const declaration = {
+      kind: "VarDeclaration",
+      value: this.parse_expr(),
+      identifier,
+      constant: isConstand,
+    }as VarDeclaration;
+
+    this.expect(TokenType.Samicolon, "Varible declaration statment must end with semicolon.")
+    return declaration
   }
 
   // Handle expressions
@@ -127,10 +164,8 @@ export default class Parser {
       // User defined values.
       case TokenType.Identifier:
         return { kind: "Identifier", symbol: this.eat().value } as Identifier;
-      
-      case TokenType.Null:
-        this.eat();
-        return {kind: "NullLiteral", value: "null"} as NullLiteral
+
+
       // Constants and Numeric Constants
       case TokenType.Number:
         return {
@@ -148,7 +183,7 @@ export default class Parser {
         ); // closing paren
         return value;
       }
- 
+
       // Unidentified Tokens and Invalid Code Reached
       default:
         console.error("Unexpected token found during parsing!", this.at());

@@ -1,54 +1,12 @@
-import { RuntimeVal, NumberVal, NullVal } from "./value.ts";
+import { RuntimeVal, NumberVal, MK_NULL } from "./value.ts";
 
-import { BinaryExpr, NumericLiteral, Program, Stmt } from "../analysis/ats.ts"
+import { BinaryExpr, Identifier, NumericLiteral, Program, Stmt, VarDeclaration } from "../analysis/ats.ts"
+import Env from "./env.ts";
+import { eval_binary_expr, env_identifier } from "./eval/exprassions.ts";
+import { eval_program, eval_var_declar } from "./eval/statment.ts";
 
-function eval_program(program: Program) {
-    let lastEvaluated: RuntimeVal = { type: "null", value: "null" } as NullVal;
 
-    for (const statment of program.body) {
-        lastEvaluated = evaluate(statment);
-    }
-
-    return lastEvaluated
-}
-
-function eval_numeriv_binary_expr(
-    left: NumberVal,
-    right: NumberVal,
-    operator: string
-): NumberVal {
-    let result: number;
-    if (operator == "+") {
-        result = left.value + right.value
-    } else if (operator == "-") {
-        result = left.value - right.value
-    } else if (operator == "*") {
-        result = left.value * right.value
-    } else if (operator == "/") {
-        result = left.value / right.value
-    }else {
-        result = left.value % right.value
-    }
-
-    return {value: result, type: "number"}
-}
-
-function eval_binary_expr(biop: BinaryExpr): RuntimeVal {
-    const left = evaluate(biop.left);
-    const right = evaluate(biop.right);
-
-    if (left.type == "number" && right.type == "number") {
-        return eval_numeriv_binary_expr(
-            left as NumberVal,
-            right as NumberVal,
-            biop.operator,
-        )
-    }
-
-    return { type: "null", value: "null" } as NullVal
-}
-
-export function evaluate(atsNode: Stmt): RuntimeVal {
+export function evaluate(atsNode: Stmt, env: Env): RuntimeVal {
     switch (atsNode.kind) {
         case "NumericLiteral":
             return {
@@ -56,11 +14,13 @@ export function evaluate(atsNode: Stmt): RuntimeVal {
                 type: "number",
             } as NumberVal;
         case "BinaryExpr":
-            return eval_binary_expr(atsNode as BinaryExpr)
+            return eval_binary_expr(atsNode as BinaryExpr, env)
         case "Program":
-            return eval_program(atsNode as Program)
-        case "NullLiteral":
-            return { value: "null", type: "null" } as NullVal;
+            return eval_program(atsNode as Program, env)
+        case "VarDeclaration":
+            return eval_var_declar(atsNode as VarDeclaration, env)
+        case "Identifier":
+            return env_identifier(atsNode as Identifier, env)
 
 
         default:
