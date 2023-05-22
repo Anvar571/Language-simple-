@@ -1,7 +1,7 @@
-import { BinaryExpr, Identifier } from "../../analysis/ats.ts";
+import { AssignmentExpr, BinaryExpr, CallExpr, Identifier, ObjectLitieral } from "../../analysis/ats.ts";
 import Env from "../env.ts";
 import { evaluate } from "../interpreter.ts";
-import { NumberVal, RuntimeVal, MK_NULL } from "../value.ts";
+import { NumberVal, RuntimeVal, MK_NULL, ObjectVal, NativeFnVal } from "../value.ts";
 
 function eval_numeriv_binary_expr(
     left: NumberVal,
@@ -25,7 +25,7 @@ function eval_numeriv_binary_expr(
 }
 
 export function eval_binary_expr(biop: BinaryExpr, env: Env): RuntimeVal {
-    try {
+    // try {
         const left = evaluate(biop.left, env);
         const right = evaluate(biop.right, env);
 
@@ -38,12 +38,49 @@ export function eval_binary_expr(biop: BinaryExpr, env: Env): RuntimeVal {
         }
 
         return MK_NULL()
-    } catch (error: any) {
-        console.error(error.message)
-    }
+    // } catch (error: any) {
+    //     console.error(error.message)
+    // }
 }
 
 export function env_identifier(source: Identifier, env: Env) {
     const val = env.lookupVar(source.symbol);
     return val
+}
+
+export function eval_assignment(node: AssignmentExpr, env: Env) {
+    if (node.assigne.kind !== "Identifier")
+        throw `Invalid LHS inaide assignment expr ${JSON.stringify(node.assigne)}`
+
+    const varname = (node.assigne as Identifier).symbol;
+    return env.assignVar(varname, evaluate(node.value, env));
+}
+
+export function eval_object_expr(
+    obj: ObjectLitieral, env: Env
+): RuntimeVal {
+    const object = { type: "object", properties: new Map() } as ObjectVal
+
+    for (const {key, value} of obj.properties){
+        const rimeTimeVal = (value==undefined) ? env.lookupVar(key): evaluate(value, env)
+
+        object.properties.set(key, rimeTimeVal)
+    }
+
+    return object
+}
+
+export function eval_call_expr(
+    expr: CallExpr, 
+    env: Env
+): RuntimeVal {
+    const args = expr.args.map((arg) => evaluate(arg, env));
+    const fn = evaluate(expr.caller, env);
+
+    if (fn.type !== "native_fn"){
+        throw `Cannot call value that is not a function ${JSON.stringify(fn)}`; 
+    }
+    
+    const result = (fn as NativeFnVal).call(args, env)
+    return result
 }

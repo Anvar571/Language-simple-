@@ -1,10 +1,15 @@
 // deno-lint-ignore-file no-explicit-any
 import {
+  AssignmentExpr,
   BinaryExpr,
+  CallExpr,
   Expr,
   Identifier,
+  MemberExpr,
   NumericLiteral,
+  ObjectLitieral,
   Program,
+  Property,
   Stmt,
   VarDeclaration,
 } from "./ats.ts";
@@ -34,7 +39,7 @@ export default class Parser {
   /**
    * Returns the previous token and then advances the tokens array to the next value.
    */
-  private  eat() {
+  private eat() {
     const prev = this.tokens.shift() as Token;
     return prev;
   }
@@ -86,10 +91,10 @@ export default class Parser {
   private parse_var_declaration(): Stmt {
     const isConstand = this.eat().type == TokenType.Const;
     const identifier = this.expect(TokenType.Identifier, "Expected identifier name following let | const keywords").value
-  
-    if (this.at().type == TokenType.Samicolon){
+
+    if (this.at().type == TokenType.Samicolon) {
       this.eat()
-      if (isConstand){
+      if (isConstand) {
         throw "Must assign value to constant expression no value provided.";
       }
       return {
@@ -100,13 +105,13 @@ export default class Parser {
     }
 
     this.expect(TokenType.Equals, "Expacted equals token following identifier in var declaration.");
-  
+
     const declaration = {
       kind: "VarDeclaration",
       value: this.parse_expr(),
       identifier,
       constant: isConstand,
-    }as VarDeclaration;
+    } as VarDeclaration;
 
     this.expect(TokenType.Samicolon, "Varible declaration statment must end with semicolon.")
     return declaration
@@ -114,8 +119,61 @@ export default class Parser {
 
   // Handle expressions
   private parse_expr(): Expr {
-    return this.parse_additive_expr();
+    return this.parse_assignment_expr();
   }
+
+  private parse_assignment_expr(): Expr {
+    const left = this.parse_object_expr();
+
+    if (this.at().type == TokenType.Equals) {
+      this.eat();
+      const value = this.parse_assignment_expr();
+      return { value, assigne: left, kind: "AssignmentExpr" } as AssignmentExpr;
+    }
+
+    return left;
+  }
+
+  private parse_object_expr(): Expr {
+
+    if (this.at().type !== TokenType.openBracet) {
+      return this.parse_additive_expr();
+    }
+
+    this.eat();
+    const properties = new Array<Property>();
+
+    while (this.not_eof() && this.at().type != TokenType.closeBracet) {
+      const key = this.expect(TokenType.Identifier, "Object literal key exprected").value;
+
+      if (this.at().type == TokenType.Comma) {
+        this.eat();
+        properties.push({ key, kind: "Property" } as Property);
+        continue;
+      } else if (this.at().type == TokenType.closeBracet) {
+        properties.push({ key, kind: "Property" } as Property);
+        continue;
+      }
+
+      this.expect(TokenType.Colon, "Messing colon following identier in objextExpr")
+
+      const value = this.parse_expr();
+
+      properties.push({
+        kind: "Property",
+        value,
+        key
+      });
+
+      if (this.at().type != TokenType.closeBracet) {
+        this.expect(TokenType.Comma, "Expected comma or closing bracket following property")
+      }
+    }
+
+    this.expect(TokenType.closeBracet, "Object literal missing closing brace");
+    return { kind: "ObjectLitieral", properties } as ObjectLitieral;
+  }
+
 
   // Handle Addition & Subtraction Operations
   private parse_additive_expr(): Expr {
@@ -137,13 +195,13 @@ export default class Parser {
 
   // Handle Multiplication, Division & Modulo Operations
   private parse_multiplicitave_expr(): Expr {
-    let left = this.parse_primary_expr();
+    let left = this.parce_call_member_expr();
 
     while (
       this.at().value == "/" || this.at().value == "*" || this.at().value == "%"
     ) {
       const operator = this.eat().value;
-      const right = this.parse_primary_expr();
+      const right = this.parce_call_member_expr();
       left = {
         kind: "BinaryExpr",
         left,
@@ -153,6 +211,79 @@ export default class Parser {
     }
 
     return left;
+  }
+
+  private parce_call_member_expr(): Expr {
+    const member = this.parce_mumer_expr();
+
+    if (this.at().type == TokenType.OpenParen) {
+      return this.parce_call_expr(member);
+    }
+
+    return member
+  }
+
+  private parce_call_expr(caller: Expr): Expr {
+    let call_expr: Expr = {
+      kind: "CallExpr",
+      caller,
+      args: this.parce_args()
+    } as unknown as CallExpr;
+
+    if (this.at().type == TokenType.OpenParen) {
+      call_expr = this.parce_call_expr(call_expr);
+    }
+
+    return call_expr
+  }
+
+  private parce_args(): Expr[] {
+    this.expect(TokenType.OpenParen, "Expected open paranthesis.")
+    const args = this.at().type == TokenType.CloseParen
+      ? [] : this.parce_arg_list();
+
+    this.expect(TokenType.CloseParen, "Missing closing paranthesis inside agruments list");
+    return args;
+  }
+  private parce_arg_list(): Expr[] {
+    const args = [this.parse_assignment_expr()];
+
+    while (this.at().type == TokenType.Comma && this.eat()) {
+      args.push(this.parse_assignment_expr());
+    }
+
+    return args
+  }
+
+  private parce_mumer_expr(): Expr {
+    let object = this.parse_primary_expr()
+
+    while (this.at().type == TokenType.Dot || this.at().type == TokenType.openBracket) {
+      const operator = this.eat();
+      let property: Expr;
+      let computed: boolean;
+
+      if (operator.type == TokenType.Dot) {
+        computed = false;
+        property = this.parse_primary_expr();
+        if (property.kind != "Identifier") {
+          throw `Cannot use dot operator without rigth  hand side being a indentifier`
+        } else {
+          computed = true
+          property = this.parse_expr()
+          this.expect(TokenType.closeBracket, "Missing closing bracket in computed value.")
+        }
+
+        object = {
+          kind: "MemberExpr",
+          object,
+          property,
+          computed
+        } as MemberExpr
+      }
+    }
+
+    return object
   }
 
   // Parse Literal Values & Grouping Expressions
@@ -191,3 +322,6 @@ export default class Parser {
     }
   }
 }
+
+
+// odamzod bo'lmasa!  bu dunyodan ma'no yuq

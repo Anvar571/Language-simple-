@@ -1,4 +1,5 @@
 
+// kalit so'zlarning yoki belgilarning nomlanishi
 export enum TokenType {
   // Literal Types
   Number,
@@ -10,8 +11,14 @@ export enum TokenType {
   // Grouping * Operators
   BinaryOperator,
   Equals,
+  Dot,
   OpenParen,
   CloseParen,
+  Comma,Colon,
+  openBracet,
+  closeBracet,
+  openBracket,
+  closeBracket,
   Samicolon,
   EOF, // Signified the end of file
 }
@@ -46,7 +53,7 @@ function isalpha(src: string) {
  * Returns true if the character is whitespace like -> [\s, \t, \n]
  */
 function isskippable(str: string) {
-  return str == " " || str == "\n" || str == "\t";
+  return str == " " || str == "\n" || str == "\t" || str == "\r";
 }
 
 /**
@@ -69,6 +76,11 @@ export function tokenize(sourceCode: string): Token[] {
       tokens.push(token(src.shift(), TokenType.OpenParen));
     } else if (src[0] == ")") {
       tokens.push(token(src.shift(), TokenType.CloseParen));
+    }
+    else if (src[0] == "{") {
+      tokens.push(token(src.shift(), TokenType.openBracet));
+    }else if (src[0] == "}") {
+      tokens.push(token(src.shift(), TokenType.closeBracet));
     } // HANDLE BINARY OPERATORS
     else if (
       src[0] == "+" || src[0] == "-" || src[0] == "*" || src[0] == "/" ||
@@ -80,6 +92,12 @@ export function tokenize(sourceCode: string): Token[] {
       tokens.push(token(src.shift(), TokenType.Equals));
     } else if (src[0] == ";") {
       tokens.push(token(src.shift(), TokenType.Samicolon));
+    }else if (src[0] == ":") {
+      tokens.push(token(src.shift(), TokenType.Colon));
+    }else if (src[0] == ",") {
+      tokens.push(token(src.shift(), TokenType.Comma));
+    }else if (src[0] == ".") {
+      tokens.push(token(src.shift(), TokenType.Dot));
     }// HANDLE MULTICHARACTER KEYWORDS, TOKENS, IDENTIFIERS ETC...
     else {
       // Handle numeric literals -> Integers
