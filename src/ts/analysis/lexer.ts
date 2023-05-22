@@ -12,6 +12,7 @@ export enum TokenType {
   BinaryOperator,
   Equals,
   Dot,
+  Fn,
   OpenParen,
   CloseParen,
   Comma,Colon,
@@ -28,7 +29,8 @@ export enum TokenType {
  */
 const KEYWORDS: Record<string, TokenType> = {
   let: TokenType.Let,
-  const: TokenType.Const
+  const: TokenType.Const,
+  fn: TokenType.Fn
 };
 
 // Reoresents a single token from the source-code.

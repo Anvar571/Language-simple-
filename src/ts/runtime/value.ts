@@ -1,9 +1,10 @@
+import { Stmt } from "../analysis/ats.ts";
 import Env from "./env.ts";
 
 /**
  * o'zgaruvchilar oladigan typelar
  */
-export type ValueType = "null" | "number"| "boolean" | "object" | "native_fn" | "string";
+export type ValueType = "null" | "number"| "boolean" | "object" | "native_fn" | "string" | "function";
 
 export interface RuntimeVal {
     type: ValueType
@@ -35,6 +36,13 @@ export interface NativeFnVal extends RuntimeVal {
     type: "native_fn",
     call: FunctionCall
 }
+
+export interface FunctionVal extends RuntimeVal {
+    type: "function",
+    parameters: string[],
+    body: Stmt[],
+    declarationEnv: Env
+} 
 
 export function MK_NATIVE_FN(call: FunctionCall){
     return {type: "native_fn", call} as NativeFnVal

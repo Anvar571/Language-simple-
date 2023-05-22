@@ -1,7 +1,7 @@
-import { AssignmentExpr, BinaryExpr, CallExpr, Identifier, ObjectLitieral } from "../../analysis/ats.ts";
+import { AssignmentExpr, BinaryExpr, CallExpr, FunctionDeclaration, Identifier, ObjectLitieral } from "../../analysis/ats.ts";
 import Env from "../env.ts";
 import { evaluate } from "../interpreter.ts";
-import { NumberVal, RuntimeVal, MK_NULL, ObjectVal, NativeFnVal } from "../value.ts";
+import { NumberVal, RuntimeVal, MK_NULL, ObjectVal, NativeFnVal, FunctionVal } from "../value.ts";
 
 function eval_numeriv_binary_expr(
     left: NumberVal,
@@ -26,18 +26,18 @@ function eval_numeriv_binary_expr(
 
 export function eval_binary_expr(biop: BinaryExpr, env: Env): RuntimeVal {
     // try {
-        const left = evaluate(biop.left, env);
-        const right = evaluate(biop.right, env);
+    const left = evaluate(biop.left, env);
+    const right = evaluate(biop.right, env);
 
-        if (left.type == "number" && right.type == "number") {
-            return eval_numeriv_binary_expr(
-                left as NumberVal,
-                right as NumberVal,
-                biop.operator,
-            )
-        }
+    if (left.type == "number" && right.type == "number") {
+        return eval_numeriv_binary_expr(
+            left as NumberVal,
+            right as NumberVal,
+            biop.operator,
+        )
+    }
 
-        return MK_NULL()
+    return MK_NULL()
     // } catch (error: any) {
     //     console.error(error.message)
     // }
@@ -61,8 +61,8 @@ export function eval_object_expr(
 ): RuntimeVal {
     const object = { type: "object", properties: new Map() } as ObjectVal
 
-    for (const {key, value} of obj.properties){
-        const rimeTimeVal = (value==undefined) ? env.lookupVar(key): evaluate(value, env)
+    for (const { key, value } of obj.properties) {
+        const rimeTimeVal = (value == undefined) ? env.lookupVar(key) : evaluate(value, env)
 
         object.properties.set(key, rimeTimeVal)
     }
@@ -71,16 +71,39 @@ export function eval_object_expr(
 }
 
 export function eval_call_expr(
-    expr: CallExpr, 
+    expr: CallExpr,
     env: Env
 ): RuntimeVal {
     const args = expr.args.map((arg) => evaluate(arg, env));
     const fn = evaluate(expr.caller, env);
 
-    if (fn.type !== "native_fn"){
-        throw `Cannot call value that is not a function ${JSON.stringify(fn)}`; 
+    if (fn.type == "native_fn") {
+        const result = (fn as NativeFnVal).call(args, env)
+        return result
+    }
+    if (fn.type == "function") {
+        const func = fn as FunctionVal;
+        const scope = new Env(func.declarationEnv);
+
+        for(let i =0 ; i < func.parameters.length; i++){
+            const varname = func.parameters[i];
+            scope.declareVar(varname, args[i], false);
+        }
+
+        let result: RuntimeVal = MK_NULL();
+        for (const stmt of func.body){
+            result = evaluate(stmt, scope);
+        }
+
+        return result
     }
     
-    const result = (fn as NativeFnVal).call(args, env)
-    return result
+    throw `Cannot call value that is not a function ${JSON.stringify(fn)}`;
 }
+
+// export function eval_funcion_declar(
+//     declaration: FunctionDeclaration,
+//     env: Env
+// ): RuntimeVal {
+
+// }

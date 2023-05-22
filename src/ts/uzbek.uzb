@@ -1,4 +1,6 @@
-let x = 12 + 23;
-x = x - 3
+fn add(a, b){
+    let x = a + b;
+    return x
+}
 
-print(12, x)
+print(add(12, 3))

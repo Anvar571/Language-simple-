@@ -1,4 +1,4 @@
-import { MK_BOOL, MK_NATIVE_FN, MK_NULL, RuntimeVal } from "./value.ts";
+import { MK_BOOL, MK_NATIVE_FN, MK_NULL, MK_NUMBER, RuntimeVal } from "./value.ts";
 
 export function createEnv() {
     const env = new Env();
@@ -11,6 +11,12 @@ export function createEnv() {
         
         return MK_NULL();
     }), true)
+
+    function timeFunction(_args: RuntimeVal[], _env: Env){
+        return MK_NUMBER(Date.now());
+    }
+
+    env.declareVar("time", MK_NATIVE_FN(timeFunction), true);
 
     return env
 }

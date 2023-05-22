@@ -8,6 +8,7 @@ import {
     AssignmentExpr,
     BinaryExpr,
     CallExpr,
+    FunctionDeclaration,
     Identifier,
     NumericLiteral,
     ObjectLitieral,
@@ -22,12 +23,13 @@ import {
     env_identifier,
     eval_assignment,
     eval_object_expr,
-    eval_call_expr
+    eval_call_expr,
 } from "./eval/exprassions.ts";
 
 import {
     eval_program,
-    eval_var_declar
+    eval_var_declar,
+    eval_funcion_declar
 } from "./eval/statment.ts";
 
 
@@ -59,6 +61,8 @@ export function evaluate(atsNode: Stmt, env: Env): RuntimeVal {
             return eval_object_expr(atsNode as ObjectLitieral, env);
         case "VarDeclaration":
             return eval_var_declar(atsNode as VarDeclaration, env)
+        case "FunctionDeclaration":
+            return eval_funcion_declar(atsNode as FunctionDeclaration, env);
         case "Identifier":
             return env_identifier(atsNode as Identifier, env)
 
