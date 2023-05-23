@@ -1,6 +1,14 @@
-fn add(a, b){
-    let x = a + b;
-    return x
-}
+const foo = 12;
 
-print(add(12, 3))
+
+fn add(a, b){
+    let s = 2;
+
+    fn inside(){
+        s
+    }
+
+    s = a + b + s
+}
+print(add(12, 4))
+print(time())

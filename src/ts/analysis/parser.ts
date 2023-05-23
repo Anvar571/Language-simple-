@@ -62,6 +62,7 @@ export default class Parser {
 
   public produceAST(sourceCode: string): Program {
     this.tokens = tokenize(sourceCode);
+    
     const program: Program = {
       kind: "Program",
       body: [],
@@ -71,6 +72,8 @@ export default class Parser {
     while (this.not_eof()) {
       program.body.push(this.parse_stmt());
     }
+
+    console.log(program);
 
     return program;
   }
@@ -86,9 +89,7 @@ export default class Parser {
         return this.parse_fn_declaration();
       default:
         return this.parse_expr();
-
     }
-
   }
 
   private parse_fn_declaration(): Stmt {

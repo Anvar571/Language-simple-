@@ -100,10 +100,3 @@ export function eval_call_expr(
     
     throw `Cannot call value that is not a function ${JSON.stringify(fn)}`;
 }
-
-// export function eval_funcion_declar(
-//     declaration: FunctionDeclaration,
-//     env: Env
-// ): RuntimeVal {
-
-// }

@@ -3,7 +3,6 @@ import Env from "../env.ts";
 import { evaluate } from "../interpreter.ts";
 import { RuntimeVal, MK_NULL, FunctionVal } from "../value.ts";
 
-
 export function eval_program(program: Program, env: Env) {
     let lastEvaluated: RuntimeVal = MK_NULL();
 
